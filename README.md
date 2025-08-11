@@ -1,16 +1,94 @@
-# 🎨 Better GPT Image
+# 🎨 Better GPT Image - Enhanced AI Image Generation
 
-An enhanced image generation tool that optimizes prompts and leverages OpenAI's GPT-Image-1 model for superior results. Deploy on Replicate or run locally!
+**Transform your ideas into stunning images with intelligent prompt optimization powered by GPT-5**
 
-## ⚠️ IMPORTANT: API Key Required
+Better GPT Image is an advanced image generation tool that automatically enhances your prompts using state-of-the-art language models before generating images. Get professional-quality results without being a prompt engineering expert!
 
-**This model requires YOUR OWN OpenAI API key to function.** The API key is:
-- ✅ Used only for the current generation
-- ✅ Never stored or logged
-- ✅ Billed directly to your OpenAI account
-- ✅ Kept completely private and secure
+## 🌟 Why Better GPT Image?
 
-Get your API key at: https://platform.openai.com/api-keys
+Traditional image generation requires careful prompt crafting. Better GPT Image solves this by:
+- **Automatic Prompt Enhancement**: Uses GPT-5 to optimize your prompts for superior results
+- **90+ Artistic Styles**: From photorealistic to anime, oil painting to 3D renders
+- **Professional Quality**: Leverages OpenAI's latest GPT-Image-1 model
+- **Context-Aware**: Understands and improves vague or incomplete descriptions
+- **Style Preservation**: Maintains your intended artistic vision while enhancing details
+
+## ⚡ Quick Start
+
+### Use on Replicate (Recommended)
+1. Visit: https://replicate.com/preangelleo/better-gpt-image
+2. Enter your OpenAI API key
+3. Type your prompt (can be simple!)
+4. Select a style preset
+5. Click "Run"
+
+### API Usage
+```python
+import replicate
+
+output = replicate.run(
+    "preangelleo/better-gpt-image:latest",
+    input={
+        "api_key": "your-openai-api-key",
+        "prompt": "a sunset over mountains",
+        "style_preset": "oil_painting",
+        "optimize_prompt": True
+    }
+)
+```
+
+## 💡 Key Features
+
+### 🚀 Intelligent Prompt Optimization
+Our advanced system transforms simple descriptions into detailed, context-rich prompts:
+- **Before**: "a cat"
+- **After**: "A majestic tabby cat with striking green eyes, sitting elegantly on a vintage wooden windowsill, soft afternoon sunlight streaming through sheer curtains, creating a warm and peaceful atmosphere, highly detailed fur texture, professional photography"
+
+### 🎨 90+ Style Presets
+Choose from our curated collection:
+- **Photorealistic**: Ultra-realistic photography with professional quality
+- **Cinematic**: Movie-quality scenes with dramatic lighting
+- **Anime/Manga**: Japanese animation styles including Studio Ghibli
+- **3D Animation**: Pixar, Disney, DreamWorks styles
+- **Traditional Art**: Oil painting, watercolor, pencil sketch
+- **Modern Digital**: Concept art, cyberpunk, vaporwave
+- **Historical**: Renaissance, Baroque, Art Nouveau
+- And many more!
+
+### 🛠️ Advanced Options
+- **Multiple Sizes**: 1024x1024, 1536x1024, 1024x1536
+- **Quality Settings**: Low, Medium, High, Auto
+- **Reference Images**: Use existing images as style references
+- **Mask Editing**: Edit specific parts of images
+- **Transparent Backgrounds**: Generate images with transparency
+- **Batch Generation**: Create multiple variations
+
+## 📊 Pricing
+
+**$0.01 per generation** + your OpenAI API costs
+
+You provide your own OpenAI API key, ensuring:
+- Direct billing to your OpenAI account
+- Complete privacy and security
+- No hidden fees or markups
+- Full control over your usage
+
+## 🔒 Security & Privacy
+
+- **Your API key is NEVER stored**: Used only for the current generation
+- **No logging**: Your prompts and images remain private
+- **Direct API calls**: No intermediary servers
+- **Open source**: Full transparency in our code
+
+## 📸 Example Results
+
+### Prompt: "A magical library"
+**Style**: Studio Ghibli
+**Enhanced Result**: "A vast magical library in Studio Ghibli animation style, towering bookshelves reaching into misty heights, floating books with glowing pages, warm golden light streaming through stained glass windows, a cozy reading nook with plush cushions, whimsical fantasy atmosphere, hand-drawn animation quality, soft watercolor textures"
+
+### Prompt: "Future city"
+**Style**: Cyberpunk
+**Enhanced Result**: "A sprawling cyberpunk metropolis at night, neon-lit skyscrapers piercing through fog, holographic advertisements floating between buildings, flying vehicles leaving light trails, rain-slicked streets reflecting colorful lights, dense urban atmosphere, Blade Runner aesthetic, highly detailed, atmospheric perspective"
 
 ## ✨ Features
 

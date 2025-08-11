@@ -8,6 +8,14 @@ from typing import Dict, List, Optional, Tuple, Any
 from openai import OpenAI
 import json
 from .style_presets import STYLE_PRESETS, get_style_list
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from image_optimizer_prompt import SYSTEM_PROMPT_STRUCTURED_IMAGE_DESCRIPTION
+except ImportError:
+    # Fallback if custom prompt not available
+    SYSTEM_PROMPT_STRUCTURED_IMAGE_DESCRIPTION = None
 
 
 class PromptOptimizer:
@@ -183,16 +191,20 @@ class PromptOptimizer:
     def _gpt_enhance(self, prompt: str, style: Optional[str], intent: Dict, model: str = None) -> str:
         """Use GPT to intelligently enhance the prompt"""
         
-        system_prompt = """You are an expert at writing prompts for image generation AI. 
-        Your task is to enhance user prompts to get better, more detailed, and more artistic results.
-        
-        Guidelines:
-        1. Preserve the user's core intent and subject
-        2. Add relevant artistic and technical details
-        3. Include lighting, composition, and atmosphere descriptions
-        4. Be specific about visual elements
-        5. Keep the enhanced prompt under 200 words
-        6. Return ONLY the enhanced description, no explanations"""
+        # Use custom system prompt if available, otherwise use default
+        if SYSTEM_PROMPT_STRUCTURED_IMAGE_DESCRIPTION:
+            system_prompt = SYSTEM_PROMPT_STRUCTURED_IMAGE_DESCRIPTION
+        else:
+            system_prompt = """You are an expert at writing prompts for image generation AI. 
+            Your task is to enhance user prompts to get better, more detailed, and more artistic results.
+            
+            Guidelines:
+            1. Preserve the user's core intent and subject
+            2. Add relevant artistic and technical details
+            3. Include lighting, composition, and atmosphere descriptions
+            4. Be specific about visual elements
+            5. Keep the enhanced prompt under 200 words
+            6. Return ONLY the enhanced description, no explanations"""
         
         user_message = f"Original prompt: {prompt}"
         

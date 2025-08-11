@@ -1,4 +1,7 @@
 
+# Image Optimizer System Prompt for Better GPT Image
+# This prompt is used to enhance user inputs for better image generation results
+
 SYSTEM_PROMPT_STRUCTURED_IMAGE_DESCRIPTION = """# Image Description Refinement System Prompt
 
 User will send an image prompt or idea for image generation from a storyboard script. Refine the prompt with the following image generation best practices. Respond only with the refined image description in plain text format with proper structure using line breaks and spacing, no JSON format.
