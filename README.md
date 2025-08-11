@@ -4,6 +4,49 @@
 
 Better GPT Image is an advanced open-source image generation tool that automatically enhances your prompts using state-of-the-art language models before generating images. Get professional-quality results without being a prompt engineering expert!
 
+## 📸 Example Result
+
+### Original Prompt (User Input):
+```
+ A beautiful little girl walking her puppy on Tokyo Street. 
+```
+
+### Enhanced Prompt (After GPT Optimization):
+```
+**Main Subject:**
+A charming young girl with expressive eyes and shoulder-length hair, dressed in casual yet stylish clothing, walking her small, lively puppy with a leash.
+
+**Setting & Environment:**
+A bustling Tokyo street filled with a variety of shops and lanterns, displaying the vibrant and dynamic urban life. The street should be depicted with architectural accuracy, showcasing the unique characteristics of Tokyo cityscapes.
+
+**Composition & Lighting:**
+A medium full-shot composition should be taken from a low angle, focusing on the girl and her puppy. They should be positioned in the middle of the frame with the Tokyo street as the backdrop. The scene should be bathed in late afternoon sunlight, creating long shadows and a warm, inviting atmosphere.
+
+**Style & Details:**
+Render the image in a 3D animated cartoon style, similar to Pixar/Disney animations. Emphasize the non-photorealistic, stylized features of the characters and the environment. The color palette should include vibrant and rich colors, reflecting the energetic atmosphere of a Tokyo street.
+
+**Additional Elements:**
+Include various city life elements, such as pedestrians in the background, colorful shop signs, and perhaps a bicycle or two parked on the side of the street. The puppy should be of an adorable breed, enthusiastically leading the way with a wagging tail.
+
+**Negative Prompt:**
+2d, flat, painting, photograph, hand-drawn
+
+**Settings:**
+- Style: 3d_render
+- GPT Enhancement: True
+- Model: gpt-4
+- Original Length: 58 chars
+- Enhanced Length: 1358 chars
+- Enhancement Ratio: 23.4x
+
+```
+
+*Note: Uses structured image description system for comprehensive prompt enhancement*
+
+### Generated Image:
+![Example Output](assets/example_output.jpg)
+*Style: 3D Render | Size: 1536x1024 → 16:9 | Quality: High | Model: gpt-image-1*
+
 ## 🌟 Why Better GPT Image?
 
 Traditional image generation requires careful prompt crafting. Better GPT Image solves this by:
@@ -134,6 +177,31 @@ if result["success"]:
     generator.save_image(result["images"][0]["b64_json"], "output.png")
 ```
 
+### Generation with Compression and Auto-Crop
+```python
+# Generate with post-processing
+result = generator.generate_image(
+    prompt=enhanced_prompt,
+    size="1024x1536",  # Portrait format
+    quality="high",
+    compress_to_jpg=True,  # Convert to JPG
+    crop_to_16_9=True,      # Auto-crops to 9:16 for portrait
+    jpg_quality=85          # JPG quality
+)
+
+# The result will be:
+# - Compressed to JPG format
+# - Auto-cropped to 9:16 (portrait detected)
+# - Optimized file size with quality 85
+
+if result["success"]:
+    # Save the processed image
+    generator.save_image(result["images"][0]["b64_json"], "output_optimized.jpg")
+    print(f"Format: {result['images'][0]['format']}")  # "jpg"
+    print(f"Dimensions: {result['images'][0]['dimensions']}")  # e.g., "576x1024"
+    print(f"Aspect Ratio: {result['images'][0]['aspect_ratio']}")  # "9:16"
+```
+
 ### Image Editing with Reference
 ```python
 # Edit an image using references
@@ -222,6 +290,11 @@ See all 90+ styles in `src/style_presets.py`
 - `background` - Background type: "auto", "transparent", "opaque"
 - `negative_prompt` - What to avoid in the image
 
+### Post-Processing Options
+- `compress_to_jpg` - Convert PNG to JPG format (default: False)
+- `crop_to_16_9` - Auto-crop to 16:9 (landscape) or 9:16 (portrait) based on orientation (default: False)
+- `jpg_quality` - JPG compression quality 1-100 (default: 90)
+
 ## 💰 Cost Estimation
 
 The tool includes automatic cost calculation based on OpenAI's pricing:
@@ -298,7 +371,7 @@ MIT License - see LICENSE file for details
 
 ## 🙏 Acknowledgments
 
-- OpenAI for GPT and DALL-E models
+- OpenAI for GPT and gpt-image-1 models
 - The open-source community for inspiration and support
 
 ## 📞 Support

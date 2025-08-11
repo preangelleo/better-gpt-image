@@ -51,3 +51,14 @@ reference_*.md
 reference_*.py
 gpt-image-1-pricing.md
 system_prompt_image_optimizer.py
+
+# Temporary and test files
+test_import.py
+*.yaml
+deploy_*.sh
+generate_*.py
+COVER_IMAGE_PROMPT.md
+EXAMPLE_USAGE.md
+MODEL_CARD.md
+PROJECT_PLAN.md
+REPLICATE_SETUP.md

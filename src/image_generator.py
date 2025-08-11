@@ -34,7 +34,10 @@ class ImageGenerator:
         n: int = 1,
         background: Optional[str] = None,
         use_gpt_image: bool = False,
-        model: str = "gpt-5"
+        model: str = "gpt-5",
+        compress_to_jpg: bool = False,
+        crop_to_16_9: bool = False,
+        jpg_quality: int = 90
     ) -> Dict[str, Any]:
         """
         Generate images from text prompt using either responses API or images API
@@ -47,6 +50,9 @@ class ImageGenerator:
             background: Background setting (transparent, opaque, auto)
             use_gpt_image: Use gpt-image-1 model directly instead of responses API
             model: Model to use for responses API (gpt-5, gpt-4.1, etc.)
+            compress_to_jpg: Compress PNG to JPG format (default: False)
+            crop_to_16_9: Crop image to 16:9 aspect ratio (default: False)
+            jpg_quality: JPG compression quality 1-100 (default: 90)
             
         Returns:
             Dict containing generated images and metadata
@@ -54,10 +60,21 @@ class ImageGenerator:
         try:
             if use_gpt_image:
                 # Use direct images.generate API with gpt-image-1
-                return self._generate_with_images_api(prompt, size, quality, n, background)
+                result = self._generate_with_images_api(prompt, size, quality, n, background)
             else:
                 # Use responses API with GPT-5 or other models
-                return self._generate_with_responses_api(prompt, size, quality, background, model)
+                result = self._generate_with_responses_api(prompt, size, quality, background, model)
+            
+            # Apply post-processing if requested
+            if result["success"] and (compress_to_jpg or crop_to_16_9):
+                result = self._post_process_images(
+                    result, 
+                    compress_to_jpg=compress_to_jpg,
+                    crop_to_16_9=crop_to_16_9,
+                    jpg_quality=jpg_quality
+                )
+            
+            return result
                 
         except Exception as e:
             return {
@@ -87,29 +104,11 @@ class ImageGenerator:
             tools_config[0]["background"] = background
         
         # Make API call
-        print(f"[DEBUG] Calling responses API with model: {model}")
-        print(f"[DEBUG] Tools config: {tools_config}")
-        
         response = self.client.responses.create(
             model=model,
             input=prompt,
             tools=tools_config
         )
-        
-        # Debug response structure
-        print(f"[DEBUG] Response type: {type(response)}")
-        print(f"[DEBUG] Response attributes: {dir(response)}")
-        
-        if hasattr(response, 'output'):
-            print(f"[DEBUG] response.output exists, type: {type(response.output)}")
-            if response.output:
-                print(f"[DEBUG] response.output length: {len(response.output)}")
-                for i, out in enumerate(response.output):
-                    print(f"[DEBUG] Output {i}: {out}")
-                    if hasattr(out, 'type'):
-                        print(f"[DEBUG]   - type: {out.type}")
-                    if hasattr(out, 'result'):
-                        print(f"[DEBUG]   - has result: {len(out.result) if out.result else 0} chars")
         
         # Process response
         result = {
@@ -139,7 +138,6 @@ class ImageGenerator:
                         "revised_prompt": None,  # May not be available in responses API
                         "image_id": f"img_{i}"
                     })
-                    print(f"[DEBUG] Added image {i} to results")
         
         return result
     
@@ -425,6 +423,160 @@ class ImageGenerator:
                 "error": str(e),
                 "metadata": {"prompt": new_prompt}
             }
+
+    def _post_process_images(
+        self,
+        result: Dict[str, Any],
+        compress_to_jpg: bool = False,
+        crop_to_16_9: bool = False,
+        jpg_quality: int = 90
+    ) -> Dict[str, Any]:
+        """
+        Post-process generated images (compress and/or crop)
+        
+        Args:
+            result: Generation result dictionary
+            compress_to_jpg: Convert to JPG format
+            crop_to_16_9: Crop to 16:9 aspect ratio
+            jpg_quality: JPG compression quality
+            
+        Returns:
+            Updated result dictionary with processed images
+        """
+        processed_images = []
+        
+        for img_data in result.get("images", []):
+            try:
+                # Decode base64 image
+                img_bytes = base64.b64decode(img_data["b64_json"])
+                img = Image.open(io.BytesIO(img_bytes))
+                
+                # Apply cropping if requested
+                if crop_to_16_9:
+                    img = self._crop_to_aspect_ratio(img)  # Auto-detect orientation
+                
+                # Convert to RGB if necessary (for JPG conversion)
+                if compress_to_jpg and img.mode in ('RGBA', 'LA', 'P'):
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    if img.mode == 'P':
+                        img = img.convert('RGBA')
+                    if img.mode == 'RGBA':
+                        background.paste(img, mask=img.split()[-1])
+                    else:
+                        background.paste(img)
+                    img = background
+                elif compress_to_jpg and img.mode != 'RGB':
+                    img = img.convert('RGB')
+                
+                # Save to bytes
+                output_buffer = io.BytesIO()
+                if compress_to_jpg:
+                    img.save(output_buffer, format='JPEG', quality=jpg_quality, optimize=True)
+                    format_used = "jpg"
+                else:
+                    img.save(output_buffer, format='PNG')
+                    format_used = "png"
+                
+                # Encode back to base64
+                output_buffer.seek(0)
+                processed_b64 = base64.b64encode(output_buffer.read()).decode('utf-8')
+                
+                # Update image data
+                processed_img = img_data.copy()
+                processed_img["b64_json"] = processed_b64
+                processed_img["format"] = format_used
+                processed_img["dimensions"] = f"{img.width}x{img.height}"
+                if crop_to_16_9:
+                    # Determine actual aspect ratio
+                    if img.width >= img.height:
+                        processed_img["aspect_ratio"] = "16:9"
+                    else:
+                        processed_img["aspect_ratio"] = "9:16"
+                if compress_to_jpg:
+                    processed_img["compressed"] = True
+                    processed_img["jpg_quality"] = jpg_quality
+                
+                processed_images.append(processed_img)
+                
+            except Exception as e:
+                print(f"Warning: Failed to process image: {e}")
+                # Keep original image if processing fails
+                processed_images.append(img_data)
+        
+        # Update result
+        result["images"] = processed_images
+        if compress_to_jpg or crop_to_16_9:
+            result["post_processed"] = True
+            result["processing_applied"] = []
+            if compress_to_jpg:
+                result["processing_applied"].append(f"JPG compression (quality={jpg_quality})")
+            if crop_to_16_9:
+                result["processing_applied"].append("16:9 crop")
+        
+        return result
+    
+    def _crop_to_aspect_ratio(self, img: Image.Image, aspect_ratio: tuple = None) -> Image.Image:
+        """
+        Crop image to specified aspect ratio
+        Auto-detects orientation: landscape -> 16:9, portrait -> 9:16
+        
+        Args:
+            img: PIL Image object
+            aspect_ratio: Target aspect ratio as tuple (width, height) or None for auto
+            
+        Returns:
+            Cropped PIL Image
+        """
+        original_width, original_height = img.size
+        current_ratio = original_width / original_height
+        
+        # Auto-detect aspect ratio based on orientation
+        if aspect_ratio is None or aspect_ratio == (16, 9):
+            if current_ratio >= 1.0:
+                # Landscape or square -> crop to 16:9
+                target_ratio = 16 / 9
+                detected_orientation = "landscape"
+            else:
+                # Portrait -> crop to 9:16
+                target_ratio = 9 / 16
+                detected_orientation = "portrait"
+        else:
+            # Use specified aspect ratio
+            target_ratio = aspect_ratio[0] / aspect_ratio[1]
+            detected_orientation = "custom"
+        
+        # Check if already at target ratio
+        if abs(current_ratio - target_ratio) < 0.01:
+            return img
+        
+        if current_ratio > target_ratio:
+            # Image is too wide, crop horizontally (from sides)
+            new_width = int(original_height * target_ratio)
+            new_height = original_height
+            left = (original_width - new_width) // 2
+            right = left + new_width
+            top = 0
+            bottom = original_height
+        else:
+            # Image is too tall, crop vertically (from top and bottom)
+            new_width = original_width
+            new_height = int(original_width / target_ratio)
+            left = 0
+            right = original_width
+            # Crop from top and bottom equally
+            top = (original_height - new_height) // 2
+            bottom = top + new_height
+        
+        cropped = img.crop((left, top, right, bottom))
+        
+        # Log the crop info
+        final_ratio = cropped.width / cropped.height
+        if detected_orientation == "landscape":
+            print(f"   Cropped to 16:9 landscape: {cropped.width}x{cropped.height}")
+        elif detected_orientation == "portrait":
+            print(f"   Cropped to 9:16 portrait: {cropped.width}x{cropped.height}")
+        
+        return cropped
 
     def save_image(self, b64_json: str, filepath: Union[str, Path]) -> bool:
         """Save a base64 encoded image to file"""

@@ -104,11 +104,10 @@ class InteractiveCLI:
         print("  2. Edit Image with Reference")
         print("  3. Inpaint with Mask")
         print("  4. Test Prompt Optimization Only")
-        print("  5. Batch Generate Variations")
-        print("  6. View Cost Estimate")
-        print("  7. Settings")
-        print("  8. Help & Tips")
-        print("  9. Exit")
+        print("  5. View Cost Estimate")
+        print("  6. Settings")
+        print("  7. Help & Tips")
+        print("  8. Exit")
         print("\n" + "-"*60)
     
     def generate_image(self):
@@ -130,17 +129,14 @@ class InteractiveCLI:
         optimization_model = None
         if optimize:
             print("\n🤖 Select optimization model:")
-            print("  1. GPT-4.1 (faster, balanced)")
-            print("  2. GPT-4 (stable)")
-            print("  3. GPT-5 (best quality, recommended)")
+            print("  1. GPT-5 (latest, most advanced - recommended)")
+            print("  2. GPT-4.1 (balanced, reliable)")
             
-            model_choice = input("Select model (1-3) [3]: ").strip()
-            if model_choice == "1":
+            model_choice = input("Select model (1-2) [1]: ").strip()
+            if model_choice == "2":
                 optimization_model = "gpt-4.1"
-            elif model_choice == "2":
-                optimization_model = "gpt-4"
             else:
-                optimization_model = "gpt-5"  # Default - works best
+                optimization_model = "gpt-5"  # Default - latest and best
         
         # Style selection
         style = None
@@ -217,6 +213,23 @@ class InteractiveCLI:
         except:
             num_images = 1
         
+        # Post-processing options
+        print("\n📸 Post-processing options:")
+        compress_choice = input("  Compress to JPG? (y/n) [n]: ").strip().lower()
+        compress_to_jpg = compress_choice == 'y'
+        
+        crop_choice = input("  Auto-crop to 16:9/9:16? (y/n) [n]: ").strip().lower()
+        crop_to_16_9 = crop_choice == 'y'
+        
+        jpg_quality = 90
+        if compress_to_jpg:
+            quality_str = input("  JPG quality (1-100) [90]: ").strip()
+            try:
+                jpg_quality = int(quality_str) if quality_str else 90
+                jpg_quality = max(1, min(100, jpg_quality))
+            except:
+                jpg_quality = 90
+        
         # Process prompt if optimization requested
         final_prompt = prompt
         if optimize:
@@ -274,7 +287,10 @@ class InteractiveCLI:
                 quality=quality,
                 n=num_images,
                 use_gpt_image=use_gpt_image,
-                model="gpt-5" if not use_gpt_image else None
+                model="gpt-5" if not use_gpt_image else None,
+                compress_to_jpg=compress_to_jpg,
+                crop_to_16_9=crop_to_16_9,
+                jpg_quality=jpg_quality
             )
             
             if result["success"]:
@@ -284,13 +300,23 @@ class InteractiveCLI:
                 saved_files = []
                 for i, img_data in enumerate(result["images"]):
                     if "b64_json" in img_data:
+                        # Determine file extension based on format
+                        ext = "jpg" if compress_to_jpg else "png"
                         # Include cost in filename (e.g., generated_1_165c.png for $1.65)
-                        filename = f"generated_{i+1}_{cost_cents}c.png"
+                        filename = f"generated_{i+1}_{cost_cents}c.{ext}"
                         filepath = self.session_output / filename
                         
                         self.generator.save_image(img_data["b64_json"], filepath)
                         saved_files.append(filepath)
                         print(f"  💾 Saved: {filepath}")
+                        
+                        # Show processing info if applied
+                        if img_data.get("format"):
+                            print(f"     Format: {img_data['format']}")
+                        if img_data.get("dimensions"):
+                            print(f"     Dimensions: {img_data['dimensions']}")
+                        if img_data.get("aspect_ratio"):
+                            print(f"     Aspect Ratio: {img_data['aspect_ratio']}")
                         
                         if img_data.get("revised_prompt"):
                             print(f"  📝 Revised: {img_data['revised_prompt'][:100]}...")
@@ -305,8 +331,12 @@ class InteractiveCLI:
                             "size": size,
                             "quality": quality,
                             "style": style,
-                            "num_images": num_images
+                            "num_images": num_images,
+                            "compress_to_jpg": compress_to_jpg,
+                            "crop_to_16_9": crop_to_16_9,
+                            "jpg_quality": jpg_quality if compress_to_jpg else None
                         },
+                        "post_processing": result.get("processing_applied", []),
                         "files": [str(f) for f in saved_files],
                         "result": result["metadata"]
                     }, f, indent=2)
@@ -381,16 +411,19 @@ class InteractiveCLI:
         # Generate
         print("\n✏️ Editing image...")
         try:
-            # Process reference images
-            processed_images = []
+            # Process reference images and convert to base64
+            reference_images = []
             for img_path in selected_images:
-                processed = self.processor.prepare_input_image(str(img_path))
-                processed_images.append(processed)
+                # Convert image to base64
+                b64_data = self.generator.image_to_base64(str(img_path))
+                reference_images.append({"base64": b64_data})
             
-            result = self.generator.edit_image(
+            result = self.generator.edit_image_with_reference(
                 prompt=prompt,
-                images=processed_images,
-                input_fidelity=fidelity
+                reference_images=reference_images,
+                input_fidelity=fidelity,
+                quality="high",
+                model="gpt-4.1"
             )
             
             if result["success"]:
@@ -413,7 +446,7 @@ class InteractiveCLI:
     
     def test_prompt_optimization(self):
         """Test prompt optimization without generating images"""
-        print("\n✨ PROMPT OPTIMIZATION TEST")
+        print("\n✨ PROMPT OPTIMIZATION ONLY")
         print("-"*40)
         
         prompt = input("\n📝 Enter prompt to optimize: ").strip()
@@ -421,47 +454,122 @@ class InteractiveCLI:
             print("❌ Prompt cannot be empty!")
             return
         
-        print("\n🎨 Testing style presets...")
-        # Test a subset of popular styles
-        styles = ["none", "photorealistic", "cinematic", "anime", "oil_painting", 
-                 "watercolor", "3d_render", "concept_art", "cyberpunk", "impressionist"]
+        # Ask if user wants to use GPT optimization
+        use_gpt = input("\n🤖 Use GPT for intelligent optimization? (y/n) [y]: ").strip().lower()
+        use_gpt_enhancement = use_gpt != 'n'
         
-        results = []
-        for style in styles:
-            try:
-                style_to_apply = None if style == "none" else style
-                enhanced, negative, metadata = self.optimizer.enhance_prompt(
-                    prompt,
-                    style_preset=style_to_apply,
-                    use_gpt_enhancement=False  # Faster testing
-                )
-                results.append({
-                    "style": style,
-                    "enhanced": enhanced,
-                    "negative": negative
-                })
-            except Exception as e:
-                print(f"  ⚠️ Error with {style}: {e}")
+        # Select style
+        print("\n🎨 Select style preset:")
+        styles = ["photorealistic", "cinematic", "anime", "oil_painting", 
+                 "watercolor", "3d_render", "concept_art", "cyberpunk", 
+                 "impressionist", "none", "custom"]
         
-        # Display results
-        print("\n" + "="*60)
-        print("OPTIMIZATION RESULTS")
-        print("="*60)
+        for i, style in enumerate(styles):
+            print(f"  {i}. {style}")
         
-        for r in results:
-            print(f"\n🎨 Style: {r['style']}")
-            print(f"✨ Enhanced: {r['enhanced'][:200]}...")
-            if r['negative']:
-                print(f"⛔ Negative: {r['negative']}")
+        style_choice = input("\nSelect style (0-10) [0]: ").strip()
+        try:
+            style_idx = int(style_choice) if style_choice else 0
+            selected_style = styles[style_idx] if 0 <= style_idx < len(styles) else "photorealistic"
+        except:
+            selected_style = "photorealistic"
         
-        # Save results
-        results_file = self.session_output / f"optimization_test_{int(time.time())}.json"
-        with open(results_file, "w") as f:
-            json.dump({
-                "original": prompt,
-                "results": results
-            }, f, indent=2)
-        print(f"\n💾 Results saved: {results_file}")
+        # Handle custom style
+        if selected_style == "custom":
+            custom_style = input("\n✏️ Enter your custom style: ").strip()
+            selected_style = custom_style if custom_style else "photorealistic"
+        
+        style_to_apply = None if selected_style == "none" else selected_style
+        
+        # Select optimization model
+        optimization_model = "gpt-5"  # Default to latest
+        if use_gpt_enhancement:
+            print("\n🧠 Select optimization model:")
+            print("  1. GPT-5 (latest, most advanced)")
+            print("  2. GPT-4.1 (balanced, reliable)")
+            
+            model_choice = input("Select model (1-2) [1]: ").strip()
+            if model_choice == "2":
+                optimization_model = "gpt-4.1"
+            # Default is GPT-5
+        
+        print(f"\n⚙️ Optimizing with {selected_style if selected_style else 'no'} style...")
+        if use_gpt_enhancement:
+            print(f"   Using {optimization_model} for enhancement")
+        else:
+            print("   Using rule-based enhancement (no GPT)")
+        
+        try:
+            # Perform optimization
+            enhanced, negative, metadata = self.optimizer.enhance_prompt(
+                prompt,
+                style_preset=style_to_apply,
+                use_gpt_enhancement=use_gpt_enhancement,
+                optimization_model=optimization_model,
+                add_quality_modifiers=True
+            )
+            
+            # Display results
+            print("\n" + "="*60)
+            print("OPTIMIZATION RESULTS")
+            print("="*60)
+            
+            print(f"\n📝 ORIGINAL PROMPT:")
+            print(f"   {prompt}")
+            
+            print(f"\n✨ ENHANCED PROMPT:")
+            print(f"   {enhanced}")
+            
+            if negative:
+                print(f"\n⛔ NEGATIVE PROMPT (auto-generated):")
+                print(f"   {negative}")
+            
+            # Show metadata
+            print(f"\n📊 METADATA:")
+            print(f"   Original length: {len(prompt)} chars")
+            print(f"   Enhanced length: {len(enhanced)} chars")
+            print(f"   Enhancement ratio: {len(enhanced)/len(prompt):.1f}x")
+            if metadata.get('gpt_enhanced'):
+                print(f"   GPT enhanced: Yes ({metadata.get('optimization_model', 'unknown')})")
+            else:
+                print(f"   GPT enhanced: No (rule-based)")
+            if metadata.get('applied_style'):
+                print(f"   Applied style: {metadata['applied_style']}")
+            
+            # Save results
+            results_file = self.session_output / f"optimized_prompt_{int(time.time())}.txt"
+            with open(results_file, "w") as f:
+                f.write("# Prompt Optimization Results\n")
+                f.write(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+                f.write(f"## Original Prompt:\n{prompt}\n\n")
+                f.write(f"## Enhanced Prompt:\n{enhanced}\n\n")
+                if negative:
+                    f.write(f"## Negative Prompt:\n{negative}\n\n")
+                f.write(f"## Settings:\n")
+                f.write(f"- Style: {selected_style}\n")
+                f.write(f"- GPT Enhancement: {use_gpt_enhancement}\n")
+                if use_gpt_enhancement:
+                    f.write(f"- Model: {optimization_model}\n")
+                f.write(f"- Original Length: {len(prompt)} chars\n")
+                f.write(f"- Enhanced Length: {len(enhanced)} chars\n")
+                f.write(f"- Enhancement Ratio: {len(enhanced)/len(prompt):.1f}x\n")
+            
+            print(f"\n💾 Results saved to: {results_file}")
+            
+            # Ask if user wants to copy to clipboard (optional)
+            copy_choice = input("\n📋 Copy enhanced prompt to clipboard? (y/n) [n]: ").strip().lower()
+            if copy_choice == 'y':
+                try:
+                    import pyperclip
+                    pyperclip.copy(enhanced)
+                    print("✅ Enhanced prompt copied to clipboard!")
+                except ImportError:
+                    print("⚠️ pyperclip not installed. Install with: pip install pyperclip")
+                except Exception as e:
+                    print(f"⚠️ Could not copy to clipboard: {e}")
+        
+        except Exception as e:
+            print(f"❌ Optimization failed: {e}")
     
     def show_help(self):
         """Display help and tips"""
@@ -548,7 +656,7 @@ class InteractiveCLI:
         while True:
             self.show_menu()
             
-            choice = input("\n👉 Select option (1-9): ").strip()
+            choice = input("\n👉 Select option (1-8): ").strip()
             
             if choice == "1":
                 self.generate_image()
@@ -560,8 +668,6 @@ class InteractiveCLI:
             elif choice == "4":
                 self.test_prompt_optimization()
             elif choice == "5":
-                print("\n🚧 Batch generation coming soon!")
-            elif choice == "6":
                 # Show cost estimate
                 print("\n💰 TOKEN USAGE ESTIMATES")
                 print("-"*40)
@@ -570,11 +676,11 @@ class InteractiveCLI:
                     for quality in ["low", "medium", "high"]:
                         est = self.generator.estimate_cost(size, quality, 1)
                         print(f"  {quality:8} : {est['output_tokens']:,} tokens")
-            elif choice == "7":
+            elif choice == "6":
                 self.show_settings()
-            elif choice == "8":
+            elif choice == "7":
                 self.show_help()
-            elif choice == "9":
+            elif choice == "8":
                 print("\n👋 Goodbye!")
                 print(f"📁 Your outputs are in: {self.output_dir}")
                 break

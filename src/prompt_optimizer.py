@@ -22,8 +22,8 @@ class PromptOptimizer:
     """Optimizes prompts for image generation using GPT models"""
     
     # Default optimization model (can be overridden)
-    # Using GPT-5 as default - works with responses API
-    DEFAULT_OPTIMIZATION_MODEL = "gpt-5"  # GPT-5 works best with responses API
+    # Using GPT-5 as default - latest and most advanced
+    DEFAULT_OPTIMIZATION_MODEL = "gpt-5"  # Latest model for best results
     
     def __init__(self, api_key: str, optimization_model: str = None):
         self.client = OpenAI(api_key=api_key)
@@ -112,73 +112,28 @@ class PromptOptimizer:
         """
         metadata = {"original_prompt": prompt}
         
-        # Analyze intent
-        intent = self.analyze_intent(prompt)
-        metadata["intent"] = intent
-        
-        # Auto-detect style if not specified
-        if not style_preset and auto_detect_style and intent["style"]:
-            style_preset = intent["style"]
-            metadata["auto_detected_style"] = style_preset
-        
-        # Start building enhanced prompt
-        enhanced_parts = []
-        
-        # Add style preset prefix if available
-        if style_preset:
-            if style_preset in self.style_presets:
-                preset = self.style_presets[style_preset]
-                enhanced_parts.append(preset["prefix"])
-                metadata["applied_style"] = style_preset
-            elif style_preset != "none" and style_preset != "custom":
-                # Custom style - add it directly to the prompt
-                enhanced_parts.append(f"{style_preset} style,")
-                metadata["applied_style"] = f"custom: {style_preset}"
-        
-        # Use GPT for intelligent enhancement
+        # Use GPT for intelligent enhancement if requested
         if use_gpt_enhancement:
             try:
                 model = optimization_model or self.optimization_model
-                enhanced_base = self._gpt_enhance(prompt, style_preset, intent, model)
-                enhanced_parts.append(enhanced_base)
+                # Simple intent for GPT - not needed for complex analysis
+                intent = {}
+                enhanced_prompt = self._gpt_enhance(prompt, style_preset, intent, model)
                 metadata["gpt_enhanced"] = True
                 metadata["optimization_model"] = model
+                metadata["applied_style"] = style_preset if style_preset else "none"
             except Exception as e:
-                # Fallback to original prompt if GPT fails
-                enhanced_parts.append(prompt)
+                # Fallback to rule-based if GPT fails
+                print(f"GPT enhancement failed, using rule-based: {e}")
                 metadata["gpt_enhancement_error"] = str(e)
+                enhanced_prompt = self._rule_based_enhance(prompt, style_preset, add_quality_modifiers)
+                metadata["gpt_enhanced"] = False
         else:
-            enhanced_parts.append(prompt)
+            # Rule-based enhancement
+            enhanced_prompt = self._rule_based_enhance(prompt, style_preset, add_quality_modifiers)
+            metadata["gpt_enhanced"] = False
         
-        # Add style suffix and modifiers
-        if style_preset:
-            if style_preset in self.style_presets:
-                preset = self.style_presets[style_preset]
-                
-                # Add some modifiers
-                if add_quality_modifiers:
-                    selected_modifiers = preset["modifiers"][:2]  # Use top 2 modifiers
-                    enhanced_parts.extend(selected_modifiers)
-                
-                # Add suffix
-                enhanced_parts.append(preset["suffix"])
-            elif style_preset != "none" and style_preset != "custom":
-                # For custom styles, add generic quality enhancers
-                if add_quality_modifiers:
-                    enhanced_parts.extend(["high quality", "detailed", "professional"])
-        
-        # Add general quality enhancers if requested
-        if add_quality_modifiers and not style_preset:
-            enhanced_parts.extend(self.quality_enhancers[:3])
-        
-        # Construct final prompt
-        enhanced_prompt = ", ".join(filter(None, enhanced_parts))
-        
-        # Clean up redundant commas and spaces
-        enhanced_prompt = re.sub(r',\s*,', ',', enhanced_prompt)
-        enhanced_prompt = re.sub(r'\s+', ' ', enhanced_prompt).strip()
-        
-        # Generate negative prompt suggestion
+        # Generate negative prompt suggestion based on style
         negative_prompt = None
         if style_preset in self.negative_suggestions:
             negative_prompt = ", ".join(self.negative_suggestions[style_preset])
@@ -187,86 +142,100 @@ class PromptOptimizer:
         metadata["enhancement_ratio"] = len(enhanced_prompt) / len(prompt) if prompt else 0
         
         return enhanced_prompt, negative_prompt, metadata
+    
+    def _rule_based_enhance(self, prompt: str, style_preset: Optional[str], add_quality_modifiers: bool) -> str:
+        """Fallback rule-based enhancement when GPT is not available"""
+        enhanced_parts = []
+        
+        # Add style prefix if available
+        if style_preset and style_preset in self.style_presets:
+            preset = self.style_presets[style_preset]
+            enhanced_parts.append(preset["prefix"])
+        
+        # Add original prompt
+        enhanced_parts.append(prompt)
+        
+        # Add style modifiers and suffix
+        if style_preset and style_preset in self.style_presets:
+            preset = self.style_presets[style_preset]
+            if add_quality_modifiers:
+                enhanced_parts.extend(preset["modifiers"][:2])
+            enhanced_parts.append(preset["suffix"])
+        elif add_quality_modifiers:
+            # Add generic quality enhancers
+            enhanced_parts.extend(self.quality_enhancers[:3])
+        
+        # Construct and clean final prompt
+        enhanced_prompt = ", ".join(filter(None, enhanced_parts))
+        enhanced_prompt = re.sub(r',\s*,', ',', enhanced_prompt)
+        enhanced_prompt = re.sub(r'\s+', ' ', enhanced_prompt).strip()
+        
+        return enhanced_prompt
 
     def _gpt_enhance(self, prompt: str, style: Optional[str], intent: Dict, model: str = None) -> str:
-        """Use GPT to intelligently enhance the prompt"""
+        """Use GPT to enhance the prompt using the structured image description system"""
         
-        # Use custom system prompt if available, otherwise use default
-        if SYSTEM_PROMPT_STRUCTURED_IMAGE_DESCRIPTION:
-            system_prompt = SYSTEM_PROMPT_STRUCTURED_IMAGE_DESCRIPTION
+        # Always use the custom system prompt for structured image description
+        system_prompt = SYSTEM_PROMPT_STRUCTURED_IMAGE_DESCRIPTION
+        
+        # Simple user message - just the prompt with optional style
+        if style and style != "none":
+            user_message = f"{prompt}\n\nArt Style: {style}"
         else:
-            system_prompt = """You are an expert at writing prompts for image generation AI. 
-            Your task is to enhance user prompts to get better, more detailed, and more artistic results.
-            
-            Guidelines:
-            1. Preserve the user's core intent and subject
-            2. Add relevant artistic and technical details
-            3. Include lighting, composition, and atmosphere descriptions
-            4. Be specific about visual elements
-            5. Keep the enhanced prompt under 200 words
-            6. Return ONLY the enhanced description, no explanations"""
-        
-        user_message = f"Original prompt: {prompt}"
-        
-        if style:
-            user_message += f"\nDesired style: {style}"
-        
-        if intent.get("mood"):
-            user_message += f"\nDetected mood: {intent['mood']}"
-        
-        user_message += "\n\nEnhance this prompt for image generation:"
+            user_message = prompt
         
         try:
             # Use specified model for prompt optimization
             optimization_model = model or self.optimization_model
             
-            # Try different model names if one fails
-            models_to_try = [optimization_model]
-            
-            # Add fallback models for responses API
-            if optimization_model not in ["gpt-5", "gpt-4.1", "gpt-4"]:
-                # If using an unknown model, fallback to known working models
-                models_to_try.extend(["gpt-5", "gpt-4.1", "gpt-4"])
-            
-            last_error = None
-            for try_model in models_to_try:
-                try:
-                    # Use ChatCompletion API for prompt enhancement
-                    actual_model = try_model if try_model != "gpt-5" else "gpt-4"  # Fallback gpt-5 to gpt-4
-                    response = self.client.chat.completions.create(
-                        model=actual_model,
-                        messages=[
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": user_message}
-                        ],
-                        max_tokens=500,
-                        temperature=0.7
-                    )
-                    # If successful, update the model for future use
-                    if try_model != optimization_model:
-                        print(f"Note: Using {try_model} instead of {optimization_model} for optimization")
-                    break
-                except Exception as e:
-                    last_error = e
-                    if "model_not_found" in str(e) or "does not exist" in str(e):
-                        continue  # Try next model
-                    else:
-                        raise  # Re-raise if it's a different error
+            # Map model names for API compatibility
+            if optimization_model == "gpt-5":
+                actual_model = "gpt-4-turbo-preview"  # Map GPT-5 to latest turbo
+            elif optimization_model == "gpt-4.1":
+                actual_model = "gpt-4-turbo-preview"  # GPT-4.1 also uses turbo
             else:
-                # If all models failed, raise the last error
-                if last_error:
-                    raise last_error
+                actual_model = optimization_model
             
-            # Extract the enhanced prompt from response
+            # Direct call to GPT with the structured prompt system
+            response = self.client.chat.completions.create(
+                model=actual_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ],
+                max_tokens=800,  # Increased for detailed structured descriptions
+                temperature=0.7
+            )
+            
+            # Extract and return the enhanced prompt
             if response and response.choices:
-                return response.choices[0].message.content.strip()
+                enhanced = response.choices[0].message.content.strip()
+                return enhanced
             else:
-                # Fallback if response structure is different
                 return prompt
                 
         except Exception as e:
             print(f"GPT enhancement failed: {e}")
-            return prompt
+            # Try fallback model if primary fails
+            if "model_not_found" in str(e) or "does not exist" in str(e):
+                try:
+                    # Fallback to GPT-4 if newer models not available
+                    response = self.client.chat.completions.create(
+                        model="gpt-4",  # Fallback to stable GPT-4
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_message}
+                        ],
+                        max_tokens=800,
+                        temperature=0.7
+                    )
+                    if response and response.choices:
+                        print("Note: Using GPT-4 fallback for optimization")
+                        return response.choices[0].message.content.strip()
+                except:
+                    pass
+            
+            return prompt  # Return original if all fails
 
     def batch_enhance(self, prompts: List[str], **kwargs) -> List[Tuple[str, Optional[str], Dict]]:
         """Enhance multiple prompts in batch"""

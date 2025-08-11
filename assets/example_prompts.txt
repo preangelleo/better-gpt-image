@@ -1,0 +1,38 @@
+# Enhanced Prompt Used for Generation
+
+**Main Subject:**
+A charming young girl with expressive eyes and shoulder-length hair, dressed in casual yet stylish clothing, walking her small, lively puppy with a leash.
+
+**Setting & Environment:**
+A bustling Tokyo street filled with a variety of shops and lanterns, displaying the vibrant and dynamic urban life. The street should be depicted with architectural accuracy, showcasing the unique characteristics of Tokyo cityscapes.
+
+**Composition & Lighting:**
+A medium full-shot composition should be taken from a low angle, focusing on the girl and her puppy. They should be positioned in the middle of the frame with the Tokyo street as the backdrop. The scene should be bathed in late afternoon sunlight, creating long shadows and a warm, inviting atmosphere.
+
+**Style & Details:**
+Render the image in a 3D animated cartoon style, similar to Pixar/Disney animations. Emphasize the non-photorealistic, stylized features of the characters and the environment. The color palette should include vibrant and rich colors, reflecting the energetic atmosphere of a Tokyo street.
+
+**Additional Elements:**
+Include various city life elements, such as pedestrians in the background, colorful shop signs, and perhaps a bicycle or two parked on the side of the street. The puppy should be of an adorable breed, enthusiastically leading the way with a wagging tail.
+
+**Negative Prompt:**
+2d, flat, painting, photograph, hand-drawn
+
+**Settings:**
+- Style: 3d_render
+- GPT Enhancement: True
+- Model: gpt-4
+- Original Length: 58 chars
+- Enhanced Length: 1358 chars
+- Enhancement Ratio: 23.4x
+
+# Negative Prompt:
+
+
+# Settings:
+- Size: 1536x1024 (landscape)
+- Quality: high
+- Model: gpt-image-1
+- Compressed to JPG: Yes
+- Cropped to 16:9: Yes
+- JPG Quality: 90
