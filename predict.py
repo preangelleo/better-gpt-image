@@ -28,8 +28,9 @@ class Predictor(BasePredictor):
         self,
         # API Configuration
         api_key: str = Input(
-            description="Your OpenAI API key (required)",
-            default=""
+            description="Your OpenAI API key (required - will be masked for security)",
+            default="",
+            secret=True  # This makes the input masked with dots on Replicate
         ),
         
         # Basic Generation
