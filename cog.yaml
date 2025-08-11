@@ -1,0 +1,29 @@
+# Cog configuration for Better GPT Image
+# This model enhances prompts and generates images using OpenAI's GPT-Image-1
+
+build:
+  python_version: "3.11"
+  
+  python_packages:
+    - "openai==1.51.0"
+    - "Pillow==10.2.0"
+    - "numpy==1.24.3"
+    - "requests==2.31.0"
+    - "pydantic==2.5.3"
+    - "python-dotenv==1.0.0"
+    - "aiohttp==3.9.1"
+  
+  system_packages:
+    - "libgl1-mesa-glx"
+    - "libglib2.0-0"
+    - "libsm6"
+    - "libxext6"
+    - "libxrender-dev"
+    - "libgomp1"
+    - "wget"
+    - "curl"
+
+# Model metadata
+image: "r8.im/your-username/better-gpt-image"
+
+predict: "predict.py:Predictor"

@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test outputs (but keep test_local.py)
+test_output_*.png
+test_input.png
+test_mask.png
+
+# Temporary output folders (keep examples)
+output/
+input/
+
+# Cog
+.cog/
+
+# Logs
+*.log
+
+# API Keys - Never commit these!
+*.key
+*_api_key.txt
+api_keys.json
+
+# Claude Flow
+.claude-flow/
+.swarm/
+
+# Reference docs (ignore all reference files)
+reference_*.md
+reference_*.py
+gpt-image-1-pricing.md
+system_prompt_image_optimizer.py
