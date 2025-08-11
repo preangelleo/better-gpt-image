@@ -5,7 +5,7 @@ build:
   python_version: "3.11"
   
   python_packages:
-    - "openai==1.51.0"
+    - "openai==1.12.0"
     - "Pillow==10.2.0"
     - "numpy==1.24.3"
     - "requests==2.31.0"
@@ -25,5 +25,6 @@ build:
 
 # Model metadata
 image: "r8.im/preangelleo/better-gpt-image"
+description: "Enhanced OpenAI image generation with intelligent prompt optimization. Automatically enhances your prompts using GPT-5 for superior image quality. Features 90+ style presets, multi-image generation, and advanced customization options. Requires your own OpenAI API key. $0.01 per run plus your OpenAI API costs."
 
 predict: "predict.py:Predictor"
