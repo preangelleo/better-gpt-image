@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Union, Any, AsyncGenerator
 from PIL import Image
 import aiohttp
 import asyncio
-from openai import OpenAI, AsyncOpenAI
+from openai import OpenAI
 
 
 class ImageGenerator:
@@ -19,7 +19,6 @@ class ImageGenerator:
     
     def __init__(self, api_key: str):
         self.client = OpenAI(api_key=api_key)
-        self.async_client = AsyncOpenAI(api_key=api_key)
         
         # Size options for images
         self.valid_sizes = ["1024x1024", "1536x1024", "1024x1536"]

@@ -231,11 +231,16 @@ class PromptOptimizer:
             last_error = None
             for try_model in models_to_try:
                 try:
-                    # Remove reasoning parameter as it's not supported
-                    response = self.client.responses.create(
-                        model=try_model,
-                        instructions=system_prompt,
-                        input=user_message
+                    # Use ChatCompletion API for prompt enhancement
+                    actual_model = try_model if try_model != "gpt-5" else "gpt-4"  # Fallback gpt-5 to gpt-4
+                    response = self.client.chat.completions.create(
+                        model=actual_model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_message}
+                        ],
+                        max_tokens=500,
+                        temperature=0.7
                     )
                     # If successful, update the model for future use
                     if try_model != optimization_model:
@@ -253,8 +258,8 @@ class PromptOptimizer:
                     raise last_error
             
             # Extract the enhanced prompt from response
-            if hasattr(response, 'output_text'):
-                return response.output_text.strip()
+            if response and response.choices:
+                return response.choices[0].message.content.strip()
             else:
                 # Fallback if response structure is different
                 return prompt
