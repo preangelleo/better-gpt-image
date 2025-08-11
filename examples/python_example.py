@@ -1,241 +1,423 @@
 #!/usr/bin/env python3
 """
-Better GPT Image - Python Example
-Complete example showing all parameters and usage patterns
+Better GPT Image - Python Usage Examples
+Complete examples showing all features and usage patterns
 """
 
-import replicate
 import os
+import sys
 import json
-from typing import List, Optional
+from pathlib import Path
 
-# Get your API tokens
-REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Add parent directory to path for imports
+sys.path.append(str(Path(__file__).parent.parent))
 
-if not REPLICATE_API_TOKEN:
-    print("Please set REPLICATE_API_TOKEN environment variable")
-    print("Get your token at: https://replicate.com/account/api-tokens")
-    exit(1)
+from src.prompt_optimizer import PromptOptimizer
+from src.image_generator import ImageGenerator
+from src.image_processor import ImageProcessor
+from src.style_presets import get_style_list
 
-if not OPENAI_API_KEY:
-    print("Please set OPENAI_API_KEY environment variable")
-    print("Get your key at: https://platform.openai.com/api-keys")
-    exit(1)
+# Get API key from environment
+API_KEY = os.getenv("OPENAI_API_KEY")
+if not API_KEY:
+    print("Please set your OPENAI_API_KEY environment variable")
+    sys.exit(1)
 
-class BetterGPTImage:
-    """Wrapper class for Better GPT Image on Replicate"""
+def example_basic_generation():
+    """Example 1: Basic image generation with style preset"""
+    print("\n" + "="*60)
+    print("EXAMPLE 1: Basic Image Generation")
+    print("="*60)
     
-    def __init__(self, replicate_token: str, openai_key: str):
-        self.client = replicate.Client(api_token=replicate_token)
-        self.openai_key = openai_key
-        self.model = "preangelleo/better-gpt-image:latest"
+    # Initialize components
+    optimizer = PromptOptimizer(API_KEY)
+    generator = ImageGenerator(API_KEY)
     
-    def generate(
-        self,
-        prompt: str,
-        style_preset: str = "none",
-        optimize_prompt: bool = True,
-        size: str = "1024x1024",
-        quality: str = "high",
-        num_images: int = 1,
-        **kwargs
-    ) -> List[str]:
-        """
-        Generate images with Better GPT Image
-        
-        Args:
-            prompt: Description of the image to generate
-            style_preset: Artistic style (90+ options available)
-            optimize_prompt: Whether to enhance prompt with GPT
-            size: Image dimensions
-            quality: Generation quality
-            num_images: Number of images to generate
-            **kwargs: Additional parameters
-        
-        Returns:
-            List of image URLs
-        """
-        
-        # Build input parameters with defaults
-        input_params = {
-            # Required
-            "api_key": self.openai_key,
-            "prompt": prompt,
-            
-            # Core settings
-            "optimize_prompt": optimize_prompt,
-            "optimization_model": kwargs.get("optimization_model", "gpt-5"),
-            "style_preset": style_preset,
-            
-            # Image settings
-            "size": size,
-            "quality": quality,
-            "num_images": num_images,
-            
-            # Advanced features (optional)
-            "reference_images": kwargs.get("reference_images", ""),
-            "mask_image": kwargs.get("mask_image", ""),
-            "background": kwargs.get("background", "auto"),
-            "input_fidelity": kwargs.get("input_fidelity", "low"),
-            
-            # Conversation mode
-            "conversation_history": kwargs.get("conversation_history", "[]"),
-            "previous_response_id": kwargs.get("previous_response_id", ""),
-            
-            # Generation settings
-            "seed": kwargs.get("seed", -1),
-            "negative_prompt": kwargs.get("negative_prompt", ""),
-            "additional_modifiers": kwargs.get("additional_modifiers", ""),
-            "custom_instructions": kwargs.get("custom_instructions", "")
-        }
-        
-        # Run the model
-        output = self.client.run(
-            self.model,
-            input=input_params
-        )
-        
-        return output
-
-
-# Example usage functions
-def basic_example():
-    """Simple image generation"""
-    print("\n🎨 Basic Example: Simple Generation")
-    print("-" * 50)
+    # Original prompt
+    prompt = "A serene Japanese garden with koi pond"
+    print(f"Original prompt: {prompt}")
     
-    generator = BetterGPTImage(REPLICATE_API_TOKEN, OPENAI_API_KEY)
-    
-    result = generator.generate(
-        prompt="A peaceful zen garden with cherry blossoms",
-        style_preset="photorealistic"
+    # Enhance the prompt
+    enhanced_prompt, negative_prompt, metadata = optimizer.enhance_prompt(
+        prompt=prompt,
+        style_preset="photorealistic",
+        optimize_prompt=True
     )
     
-    print(f"Generated {len(result)} image(s)")
-    for i, url in enumerate(result, 1):
-        print(f"Image {i}: {url}")
+    print(f"\nEnhanced prompt: {enhanced_prompt}")
+    if negative_prompt:
+        print(f"Negative prompt: {negative_prompt}")
+    
+    # Generate image
+    result = generator.generate_image(
+        prompt=enhanced_prompt,
+        size="1024x1024",
+        quality="high"
+    )
+    
+    if result["success"]:
+        # Save the image
+        output_path = "output/example1_japanese_garden.png"
+        os.makedirs("output", exist_ok=True)
+        generator.save_image(result["images"][0]["b64_json"], output_path)
+        print(f"\n✅ Image saved to: {output_path}")
+    else:
+        print(f"\n❌ Generation failed: {result.get('error')}")
     
     return result
 
-
-def anime_style_example():
-    """Generate anime-style artwork"""
-    print("\n🎌 Anime Style Example")
-    print("-" * 50)
+def example_multiple_styles():
+    """Example 2: Generate same subject in multiple styles"""
+    print("\n" + "="*60)
+    print("EXAMPLE 2: Multiple Style Variations")
+    print("="*60)
     
-    generator = BetterGPTImage(REPLICATE_API_TOKEN, OPENAI_API_KEY)
+    optimizer = PromptOptimizer(API_KEY)
+    generator = ImageGenerator(API_KEY)
     
-    result = generator.generate(
-        prompt="A magical girl with her spirit companion",
-        style_preset="ghibli",
-        size="1536x1024",
-        quality="high",
-        additional_modifiers="studio quality, movie poster"
-    )
+    # Base prompt
+    base_prompt = "A majestic phoenix rising from flames"
+    styles = ["photorealistic", "anime", "oil_painting", "3d_render", "watercolor"]
     
-    print(f"Generated Ghibli-style image: {result[0]}")
-    return result
-
-
-def concept_art_example():
-    """Generate concept art for games/movies"""
-    print("\n🎮 Concept Art Example")
-    print("-" * 50)
-    
-    generator = BetterGPTImage(REPLICATE_API_TOKEN, OPENAI_API_KEY)
-    
-    result = generator.generate(
-        prompt="Ancient alien temple hidden in a jungle",
-        style_preset="concept_art",
-        optimize_prompt=True,
-        num_images=4,  # Generate variations
-        quality="high",
-        custom_instructions="Include atmospheric fog and dramatic lighting"
-    )
-    
-    print(f"Generated {len(result)} concept art variations")
-    return result
-
-
-def custom_style_example():
-    """Use custom style without presets"""
-    print("\n🎨 Custom Style Example")
-    print("-" * 50)
-    
-    generator = BetterGPTImage(REPLICATE_API_TOKEN, OPENAI_API_KEY)
-    
-    result = generator.generate(
-        prompt="A steampunk airship docked at a floating city",
-        style_preset="custom",
-        optimize_prompt=True,
-        custom_instructions="Combine Victorian elegance with brass machinery, Jules Verne inspired",
-        negative_prompt="modern, plastic, neon",
-        additional_modifiers="intricate details, brass and copper materials, steam clouds"
-    )
-    
-    print(f"Generated custom style image: {result[0]}")
-    return result
-
-
-def batch_generation_example():
-    """Generate multiple styles of the same subject"""
-    print("\n📦 Batch Generation Example")
-    print("-" * 50)
-    
-    generator = BetterGPTImage(REPLICATE_API_TOKEN, OPENAI_API_KEY)
-    
-    subject = "A majestic dragon perched on a mountain peak"
-    styles = ["photorealistic", "oil_painting", "anime", "3d_render", "watercolor"]
-    
-    results = {}
+    results = []
     for style in styles:
-        print(f"Generating {style} version...")
-        result = generator.generate(
-            prompt=subject,
+        print(f"\n🎨 Generating {style} version...")
+        
+        # Enhance with specific style
+        enhanced_prompt, _, _ = optimizer.enhance_prompt(
+            prompt=base_prompt,
             style_preset=style,
             optimize_prompt=True
         )
-        results[style] = result[0]
-        print(f"  ✓ {style}: {result[0]}")
+        
+        # Generate image
+        result = generator.generate_image(
+            prompt=enhanced_prompt,
+            size="1024x1024",
+            quality="medium"
+        )
+        
+        if result["success"]:
+            # Save with style name
+            output_path = f"output/example2_phoenix_{style}.png"
+            os.makedirs("output", exist_ok=True)
+            generator.save_image(result["images"][0]["b64_json"], output_path)
+            print(f"   ✅ Saved to: {output_path}")
+            results.append({"style": style, "path": output_path})
+        else:
+            print(f"   ❌ Failed: {result.get('error')}")
     
     return results
 
+def example_anime_style():
+    """Example 3: Anime/Ghibli style generation"""
+    print("\n" + "="*60)
+    print("EXAMPLE 3: Anime/Ghibli Style")
+    print("="*60)
+    
+    optimizer = PromptOptimizer(API_KEY)
+    generator = ImageGenerator(API_KEY)
+    
+    prompt = "A flying castle in the clouds"
+    
+    # Enhance with Ghibli style
+    enhanced_prompt, negative_prompt, metadata = optimizer.enhance_prompt(
+        prompt=prompt,
+        style_preset="ghibli",
+        optimize_prompt=True,
+        add_quality_modifiers=True
+    )
+    
+    print(f"Original: {prompt}")
+    print(f"Enhanced: {enhanced_prompt}")
+    
+    # Generate with high quality
+    result = generator.generate_image(
+        prompt=enhanced_prompt,
+        size="1536x1024",  # Wide aspect ratio
+        quality="high"
+    )
+    
+    if result["success"]:
+        output_path = "output/example3_ghibli_castle.png"
+        os.makedirs("output", exist_ok=True)
+        generator.save_image(result["images"][0]["b64_json"], output_path)
+        print(f"\n✅ Ghibli-style image saved to: {output_path}")
+    
+    return result
+
+def example_concept_art():
+    """Example 4: Game concept art with multiple variations"""
+    print("\n" + "="*60)
+    print("EXAMPLE 4: Game Concept Art")
+    print("="*60)
+    
+    optimizer = PromptOptimizer(API_KEY)
+    generator = ImageGenerator(API_KEY)
+    
+    prompt = "Alien marketplace on distant planet"
+    
+    # Generate multiple variations
+    variations = optimizer.suggest_variations(prompt, num_variations=3)
+    
+    results = []
+    for i, varied_prompt in enumerate(variations, 1):
+        print(f"\n🎮 Variation {i}: {varied_prompt[:100]}...")
+        
+        result = generator.generate_image(
+            prompt=varied_prompt,
+            size="1024x1024",
+            quality="high"
+        )
+        
+        if result["success"]:
+            output_path = f"output/example4_concept_art_v{i}.png"
+            os.makedirs("output", exist_ok=True)
+            generator.save_image(result["images"][0]["b64_json"], output_path)
+            print(f"   ✅ Saved to: {output_path}")
+            results.append(output_path)
+    
+    return results
+
+def example_custom_style():
+    """Example 5: Custom style without preset"""
+    print("\n" + "="*60)
+    print("EXAMPLE 5: Custom Style")
+    print("="*60)
+    
+    optimizer = PromptOptimizer(API_KEY)
+    generator = ImageGenerator(API_KEY)
+    
+    # Custom prompt with specific instructions
+    prompt = "Victorian steampunk laboratory"
+    custom_instructions = "brass and copper machinery, vintage scientific equipment, warm lighting, intricate gears and pipes"
+    negative_prompt = "modern, plastic, neon, minimalist"
+    
+    # Enhance without preset
+    enhanced_prompt, _, metadata = optimizer.enhance_prompt(
+        prompt=f"{prompt}, {custom_instructions}",
+        style_preset=None,  # No preset
+        optimize_prompt=True
+    )
+    
+    print(f"Custom prompt: {enhanced_prompt[:150]}...")
+    
+    # Generate with custom settings
+    result = generator.generate_image(
+        prompt=enhanced_prompt,
+        size="1024x1024",
+        quality="high"
+    )
+    
+    if result["success"]:
+        output_path = "output/example5_steampunk_lab.png"
+        os.makedirs("output", exist_ok=True)
+        generator.save_image(result["images"][0]["b64_json"], output_path)
+        print(f"\n✅ Custom style image saved to: {output_path}")
+    
+    return result
+
+def example_cost_estimation():
+    """Example 6: Cost estimation before generation"""
+    print("\n" + "="*60)
+    print("EXAMPLE 6: Cost Estimation")
+    print("="*60)
+    
+    generator = ImageGenerator(API_KEY)
+    
+    # Different configurations to estimate
+    configs = [
+        {"size": "1024x1024", "quality": "low", "n": 1},
+        {"size": "1024x1024", "quality": "medium", "n": 1},
+        {"size": "1024x1024", "quality": "high", "n": 1},
+        {"size": "1536x1024", "quality": "high", "n": 2},
+    ]
+    
+    print("\n💰 Cost Estimates:")
+    print("-" * 50)
+    
+    for config in configs:
+        cost_info = generator.calculate_cost(**config)
+        print(f"\nConfig: {config}")
+        print(f"  Output tokens: {cost_info['output_tokens']}")
+        print(f"  Total cost: {cost_info['total_cost']}")
+        print(f"  Cost breakdown: {cost_info['cost_breakdown']}")
+    
+    return configs
+
+def example_edit_with_reference():
+    """Example 7: Edit image with reference (requires input image)"""
+    print("\n" + "="*60)
+    print("EXAMPLE 7: Edit with Reference Image")
+    print("="*60)
+    
+    generator = ImageGenerator(API_KEY)
+    
+    # Check if reference image exists
+    reference_path = "input/reference.jpg"
+    if not os.path.exists(reference_path):
+        print(f"⚠️  Please place a reference image at: {reference_path}")
+        print("   Skipping this example...")
+        return None
+    
+    # Convert image to base64
+    b64_image = generator.image_to_base64(reference_path)
+    
+    # Edit the image
+    result = generator.edit_image_with_reference(
+        prompt="Add a beautiful sunset in the background",
+        reference_images=[{"base64": b64_image}],
+        input_fidelity="high",
+        quality="high"
+    )
+    
+    if result["success"]:
+        output_path = "output/example7_edited_with_sunset.png"
+        os.makedirs("output", exist_ok=True)
+        generator.save_image(result["images"][0]["b64_json"], output_path)
+        print(f"\n✅ Edited image saved to: {output_path}")
+    else:
+        print(f"\n❌ Edit failed: {result.get('error')}")
+    
+    return result
+
+def example_mask_editing():
+    """Example 8: Mask-based inpainting"""
+    print("\n" + "="*60)
+    print("EXAMPLE 8: Mask-Based Editing")
+    print("="*60)
+    
+    generator = ImageGenerator(API_KEY)
+    processor = ImageProcessor()
+    
+    # Check if source image exists
+    source_path = "input/source.jpg"
+    if not os.path.exists(source_path):
+        print(f"⚠️  Please place a source image at: {source_path}")
+        print("   Skipping this example...")
+        return None
+    
+    # Create a center mask
+    mask_config = processor.create_mask(
+        source_path,
+        mask_type="center",
+        mask_data={"size_ratio": 0.3}
+    )
+    
+    # Convert image to base64
+    b64_image = generator.image_to_base64(source_path)
+    
+    # Edit with mask
+    result = generator.edit_image_with_reference(
+        prompt="Replace with a blooming flower",
+        reference_images=[{"base64": b64_image}],
+        mask=mask_config,
+        input_fidelity="high"
+    )
+    
+    if result["success"]:
+        output_path = "output/example8_masked_edit.png"
+        os.makedirs("output", exist_ok=True)
+        generator.save_image(result["images"][0]["b64_json"], output_path)
+        print(f"\n✅ Masked edit saved to: {output_path}")
+    
+    return result
+
+def example_list_all_styles():
+    """Example 9: List all available style presets"""
+    print("\n" + "="*60)
+    print("EXAMPLE 9: Available Style Presets")
+    print("="*60)
+    
+    styles = get_style_list()
+    
+    print(f"\n📚 Total styles available: {len(styles)}")
+    print("\nCategories:")
+    
+    # Group styles by category (simplified)
+    categories = {
+        "Photography": ["photorealistic", "cinematic", "portrait", "landscape", "street_photography"],
+        "Animation": ["anime", "ghibli", "pixar", "disney", "3d_cartoon"],
+        "Traditional Art": ["oil_painting", "watercolor", "pencil_sketch", "charcoal", "pastel"],
+        "Digital Art": ["3d_render", "concept_art", "digital_painting", "vector_art"],
+        "Stylized": ["cyberpunk", "steampunk", "vaporwave", "synthwave", "retrowave"],
+        "Historical": ["renaissance", "baroque", "impressionism", "art_nouveau", "gothic"]
+    }
+    
+    for category, style_list in categories.items():
+        available = [s for s in style_list if s in styles]
+        if available:
+            print(f"\n{category}:")
+            for style in available:
+                print(f"  - {style}")
+    
+    # Show remaining styles
+    shown_styles = set(sum(categories.values(), []))
+    remaining = [s for s in styles if s not in shown_styles]
+    if remaining:
+        print(f"\nOther styles ({len(remaining)}):")
+        for i in range(0, min(10, len(remaining))):
+            print(f"  - {remaining[i]}")
+        if len(remaining) > 10:
+            print(f"  ... and {len(remaining) - 10} more")
+    
+    return styles
 
 def main():
     """Run all examples"""
-    print("\n" + "=" * 60)
-    print("🚀 Better GPT Image - Python Examples")
-    print("=" * 60)
+    print("\n" + "🎨"*30)
+    print(" BETTER GPT IMAGE - PYTHON EXAMPLES")
+    print("🎨"*30)
+    
+    # Create necessary directories
+    os.makedirs("input", exist_ok=True)
+    os.makedirs("output", exist_ok=True)
     
     # Run examples
+    examples = [
+        ("Basic Generation", example_basic_generation),
+        ("Multiple Styles", example_multiple_styles),
+        ("Anime/Ghibli Style", example_anime_style),
+        ("Concept Art", example_concept_art),
+        ("Custom Style", example_custom_style),
+        ("Cost Estimation", example_cost_estimation),
+        ("Edit with Reference", example_edit_with_reference),
+        ("Mask Editing", example_mask_editing),
+        ("List All Styles", example_list_all_styles),
+    ]
+    
+    print("\nSelect an example to run:")
+    for i, (name, _) in enumerate(examples, 1):
+        print(f"{i}. {name}")
+    print("0. Run all examples")
+    
     try:
-        # 1. Basic generation
-        basic_example()
+        choice = input("\nEnter your choice (0-9): ").strip()
         
-        # 2. Anime style
-        anime_style_example()
-        
-        # 3. Concept art
-        concept_art_example()
-        
-        # 4. Custom style
-        custom_style_example()
-        
-        # 5. Batch generation
-        batch_generation_example()
-        
-        print("\n" + "=" * 60)
-        print("✅ All examples completed successfully!")
-        print("=" * 60)
-        
+        if choice == "0":
+            # Run all examples
+            for name, func in examples:
+                try:
+                    func()
+                except Exception as e:
+                    print(f"\n❌ Error in {name}: {e}")
+        elif choice.isdigit() and 1 <= int(choice) <= len(examples):
+            # Run selected example
+            idx = int(choice) - 1
+            name, func = examples[idx]
+            func()
+        else:
+            print("Invalid choice")
+    
+    except KeyboardInterrupt:
+        print("\n\n👋 Goodbye!")
     except Exception as e:
         print(f"\n❌ Error: {e}")
-        print("\nTroubleshooting:")
-        print("1. Check your API keys are valid")
-        print("2. Ensure you have credits in both Replicate and OpenAI")
-        print("3. Check the model is available at: https://replicate.com/preangelleo/better-gpt-image")
-
+    
+    print("\n" + "="*60)
+    print("✅ Examples completed!")
+    print(f"📁 Check the 'output/' folder for generated images")
+    print("="*60)
 
 if __name__ == "__main__":
     main()

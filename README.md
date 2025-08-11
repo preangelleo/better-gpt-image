@@ -1,40 +1,57 @@
 # 🎨 Better GPT Image - Enhanced AI Image Generation
 
-**Transform your ideas into stunning images with intelligent prompt optimization powered by GPT-5**
+**Transform your ideas into stunning images with intelligent prompt optimization powered by GPT**
 
-Better GPT Image is an advanced image generation tool that automatically enhances your prompts using state-of-the-art language models before generating images. Get professional-quality results without being a prompt engineering expert!
+Better GPT Image is an advanced open-source image generation tool that automatically enhances your prompts using state-of-the-art language models before generating images. Get professional-quality results without being a prompt engineering expert!
 
 ## 🌟 Why Better GPT Image?
 
 Traditional image generation requires careful prompt crafting. Better GPT Image solves this by:
-- **Automatic Prompt Enhancement**: Uses GPT-5 to optimize your prompts for superior results
+- **Automatic Prompt Enhancement**: Uses GPT to optimize your prompts for superior results
 - **90+ Artistic Styles**: From photorealistic to anime, oil painting to 3D renders
-- **Professional Quality**: Leverages OpenAI's latest GPT-Image-1 model
+- **Professional Quality**: Leverages OpenAI's latest image generation models
 - **Context-Aware**: Understands and improves vague or incomplete descriptions
 - **Style Preservation**: Maintains your intended artistic vision while enhancing details
 
 ## ⚡ Quick Start
 
-### Use on Replicate (Recommended)
-1. Visit: https://replicate.com/preangelleo/better-gpt-image
-2. Enter your OpenAI API key
-3. Type your prompt (can be simple!)
-4. Select a style preset
-5. Click "Run"
+### Prerequisites
+- Python 3.8 or higher
+- OpenAI API key
 
-### API Usage
-```python
-import replicate
+### Installation
 
-output = replicate.run(
-    "preangelleo/better-gpt-image:latest",
-    input={
-        "api_key": "your-openai-api-key",
-        "prompt": "a sunset over mountains",
-        "style_preset": "oil_painting",
-        "optimize_prompt": True
-    }
-)
+1. **Clone the repository**
+```bash
+git clone https://github.com/preangelleo/better-gpt-image.git
+cd better-gpt-image
+```
+
+2. **Install dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+3. **Set up your OpenAI API key**
+
+Option A: Environment Variable (Recommended)
+```bash
+# macOS/Linux
+export OPENAI_API_KEY='your-api-key-here'
+
+# Windows
+set OPENAI_API_KEY=your-api-key-here
+```
+
+Option B: .env File
+```bash
+cp .env.example .env
+# Edit .env and add your OpenAI API key
+```
+
+4. **Run the interactive CLI**
+```bash
+python test_local.py
 ```
 
 ## 💡 Key Features
@@ -63,147 +80,6 @@ Choose from our curated collection:
 - **Transparent Backgrounds**: Generate images with transparency
 - **Batch Generation**: Create multiple variations
 
-## 📊 Pricing
-
-**$0.01 per generation** + your OpenAI API costs
-
-You provide your own OpenAI API key, ensuring:
-- Direct billing to your OpenAI account
-- Complete privacy and security
-- No hidden fees or markups
-- Full control over your usage
-
-## 🔒 Security & Privacy
-
-- **Your API key is NEVER stored**: Used only for the current generation
-- **No logging**: Your prompts and images remain private
-- **Direct API calls**: No intermediary servers
-- **Open source**: Full transparency in our code
-
-## 📸 Example Results
-
-### Prompt: "A magical library"
-**Style**: Studio Ghibli
-**Enhanced Result**: "A vast magical library in Studio Ghibli animation style, towering bookshelves reaching into misty heights, floating books with glowing pages, warm golden light streaming through stained glass windows, a cozy reading nook with plush cushions, whimsical fantasy atmosphere, hand-drawn animation quality, soft watercolor textures"
-
-### Prompt: "Future city"
-**Style**: Cyberpunk
-**Enhanced Result**: "A sprawling cyberpunk metropolis at night, neon-lit skyscrapers piercing through fog, holographic advertisements floating between buildings, flying vehicles leaving light trails, rain-slicked streets reflecting colorful lights, dense urban atmosphere, Blade Runner aesthetic, highly detailed, atmospheric perspective"
-
-## ✨ Features
-
-### 🚀 Core Capabilities
-- **Intelligent Prompt Enhancement** - Automatically optimizes your prompts using GPT-5 for better image quality
-- **Multiple Generation Modes**:
-  - Standard text-to-image generation
-  - Image editing with reference images
-  - Mask-based inpainting
-  - Multi-turn conversational editing
-- **Style Presets** - Pre-configured styles for consistent results:
-  - Photorealistic
-  - Cinematic
-  - Anime
-  - Oil Painting
-  - 3D Render
-  - Concept Art
-
-### 🎯 Advanced Features
-- **High Input Fidelity** - Preserve details from reference images
-- **Transparent Backgrounds** - Generate images with transparency
-- **Streaming Support** - Watch images generate in real-time
-- **Batch Processing** - Generate multiple variations at once
-- **Cost Estimation** - Know your token usage before generating
-
-## 🚀 Quick Start on Replicate
-
-### Use the Model (No Setup Required!)
-
-1. **Visit the model page**: https://replicate.com/preangelleo/better-gpt-image
-2. **Enter your OpenAI API key** in the `api_key` field
-3. **Type your prompt** and click "Run"
-4. **That's it!** Your enhanced image will be generated
-
-### Deploy Your Own Version
-
-1. **Fork this repository**
-2. **Sign up for Replicate**: https://replicate.com
-3. **Install Cog** (if deploying locally):
-```bash
-sudo curl -o /usr/local/bin/cog -L https://github.com/replicate/cog/releases/latest/download/cog_`uname -s`_`uname -m`
-sudo chmod +x /usr/local/bin/cog
-```
-4. **Push to Replicate**:
-```bash
-cog login
-cog push r8.im/YOUR_USERNAME/better-gpt-image
-```
-
-## 🛠️ Installation
-
-### Local Setup
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/preangelleo/better-gpt-image.git
-cd better-gpt-image
-```
-
-2. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-3. **Set up your API key**
-
-Option A: Environment Variable (Recommended)
-```bash
-# macOS/Linux
-export OPENAI_API_KEY='your-api-key-here'
-
-# Windows
-set OPENAI_API_KEY=your-api-key-here
-```
-
-Option B: .env File
-```bash
-cp .env.example .env
-# Edit .env and add your OpenAI API key
-```
-
-4. **Run Interactive CLI**
-```bash
-python test_local.py
-```
-
-The interactive CLI will:
-- Create `input/` folder for your reference images
-- Create `output/` folder for generated images
-- Guide you through all features with an easy menu
-- Save all outputs with timestamps
-
-### Replicate Deployment
-
-1. **Install Cog**
-```bash
-sudo curl -o /usr/local/bin/cog -L https://github.com/replicate/cog/releases/latest/download/cog_`uname -s`_`uname -m`
-sudo chmod +x /usr/local/bin/cog
-```
-
-2. **Test with Cog**
-```bash
-cog predict \
-  -i api_key="your-openai-api-key" \
-  -i prompt="a majestic lion in a sunset" \
-  -i optimize_prompt=true \
-  -i style_preset="photorealistic"
-```
-
-3. **Push to Replicate**
-```bash
-cog login
-cog push r8.im/your-username/better-gpt-image
-```
-
 ## 🎮 Interactive CLI
 
 The easiest way to use Better GPT Image is through the interactive CLI:
@@ -225,12 +101,16 @@ python test_local.py
 3. Follow the interactive prompts
 4. Find your generated images in `output/YYYYMMDD_HHMMSS/`
 
-## 📖 Usage
+## 📖 Python API Usage
 
 ### Basic Generation
 ```python
 from src.prompt_optimizer import PromptOptimizer
 from src.image_generator import ImageGenerator
+import os
+
+# Get API key from environment
+api_key = os.getenv("OPENAI_API_KEY")
 
 # Initialize
 optimizer = PromptOptimizer(api_key)
@@ -257,9 +137,11 @@ if result["success"]:
 ### Image Editing with Reference
 ```python
 # Edit an image using references
-result = generator.edit_image(
+result = generator.edit_image_with_reference(
     prompt="Add a sunset in the background",
-    images=["reference1.jpg", "reference2.jpg"],
+    reference_images=[
+        {"base64": generator.image_to_base64("reference1.jpg")}
+    ],
     input_fidelity="high"
 )
 ```
@@ -278,9 +160,9 @@ mask = processor.create_mask(
 )
 
 # Edit with mask
-result = generator.edit_image(
+result = generator.edit_image_with_reference(
     prompt="Replace with a flower",
-    images=["original.jpg"],
+    reference_images=[{"base64": generator.image_to_base64("original.jpg")}],
     mask=mask
 )
 ```
@@ -289,13 +171,11 @@ result = generator.edit_image(
 ```python
 # First generation
 result1 = generator.generate_image("A peaceful forest scene")
-response_id = result1["response_id"]
 
-# Refine in next turn
+# Continue the conversation
 result2 = generator.multi_turn_generation(
-    conversation_history=[{"prompt": "A peaceful forest scene", "image_id": "..."}],
     new_prompt="Add a small cabin in the distance",
-    previous_response_id=response_id
+    previous_response_id=result1.get("response_id")
 )
 ```
 
@@ -309,58 +189,108 @@ result2 = generator.multi_turn_generation(
 | `oil_painting` | Traditional painted look | Artistic, classical, portraits |
 | `3d_render` | CGI/3D graphics | Products, architecture, games |
 | `concept_art` | Professional illustrations | Games, movies, design |
+| `watercolor` | Soft, fluid painting style | Nature, portraits, abstract |
+| `pencil_sketch` | Hand-drawn pencil art | Sketches, studies, drafts |
+| `ghibli` | Studio Ghibli animation | Fantasy, whimsical, nature |
+| `cyberpunk` | Futuristic neon aesthetic | Sci-fi, urban, technology |
+
+See all 90+ styles in `src/style_presets.py`
 
 ## 📊 API Parameters
 
-### Required
-- `api_key` - Your OpenAI API key
+### Core Parameters
+- `prompt` - Image description (required)
+- `api_key` - Your OpenAI API key (or use environment variable)
 
-### Basic Options
-- `prompt` - Image description
+### Style & Enhancement
 - `optimize_prompt` - Auto-enhance prompt (default: true)
-- `style_preset` - Apply style (default: none)
-- `size` - Image dimensions (1024x1024, 1536x1024, 1024x1536)
-- `quality` - Quality level (low, medium, high)
-- `num_images` - Number to generate (1-4)
+- `optimization_model` - Model for optimization (default: gpt-4)
+- `style_preset` - Apply artistic style (default: none)
+- `additional_modifiers` - Extra style keywords
+- `custom_instructions` - Special generation instructions
 
-### Advanced Options
-- `reference_images` - Comma-separated paths/URLs
-- `mask_image` - Mask for inpainting
-- `input_fidelity` - Preserve input details (low/high)
-- `background` - Background type (auto/transparent/opaque)
-- `previous_response_id` - For multi-turn editing
-- `conversation_history` - JSON conversation context
+### Image Settings
+- `size` - Dimensions: "1024x1024", "1536x1024", "1024x1536"
+- `quality` - Quality level: "low", "medium", "high", "auto"
+- `num_images` - Number to generate (1-4)
+- `seed` - Reproducibility seed (-1 for random)
+
+### Advanced Features
+- `reference_images` - Base64 or file paths for reference
+- `mask_image` - Mask for selective editing
+- `input_fidelity` - Preserve input details: "low" or "high"
+- `background` - Background type: "auto", "transparent", "opaque"
+- `negative_prompt` - What to avoid in the image
 
 ## 💰 Cost Estimation
 
-Token usage varies by size and quality:
+The tool includes automatic cost calculation based on OpenAI's pricing:
 
+```python
+# Calculate cost before generating
+cost_info = generator.calculate_cost(
+    size="1024x1024",
+    quality="high",
+    n=2
+)
+print(f"Estimated cost: {cost_info['total_cost']}")
+```
+
+Token usage by quality:
 | Quality | 1024×1024 | 1024×1536 | 1536×1024 |
 |---------|-----------|-----------|-----------|
 | Low | 272 tokens | 408 tokens | 400 tokens |
 | Medium | 1,056 tokens | 1,584 tokens | 1,568 tokens |
 | High | 4,160 tokens | 6,240 tokens | 6,208 tokens |
 
-Use `generator.estimate_cost()` to calculate before generating.
-
 ## 🧪 Testing
 
-Run the test suite:
 ```bash
-# Basic tests (no API calls)
+# Run interactive CLI (includes test features)
 python test_local.py
 
-# Full tests (requires API key)
+# Run unit tests
 pytest tests/
+
+# Test specific functionality
+python -m pytest tests/test_prompt_optimizer.py
 ```
+
+## 📁 Project Structure
+
+```
+better-gpt-image/
+├── src/
+│   ├── prompt_optimizer.py    # Prompt enhancement logic
+│   ├── image_generator.py     # Image generation API
+│   ├── image_processor.py     # Image processing utilities
+│   ├── style_presets.py       # 90+ artistic styles
+│   └── utils.py                # Helper functions
+├── examples/
+│   ├── python_example.py      # Python usage examples
+│   └── nodejs_example.js      # Node.js usage examples
+├── tests/
+│   └── test_*.py               # Unit tests
+├── test_local.py               # Interactive CLI
+├── requirements.txt            # Python dependencies
+└── README.md                   # This file
+```
+
+## 🔒 Security & Privacy
+
+- **API keys are never stored**: Used only during runtime
+- **No external logging**: Your prompts and images remain private
+- **Direct API calls**: No intermediary servers
+- **Open source**: Full transparency in our code
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please:
 1. Fork the repository
-2. Create a feature branch
-3. Add tests for new features
-4. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
@@ -368,14 +298,13 @@ MIT License - see LICENSE file for details
 
 ## 🙏 Acknowledgments
 
-- OpenAI for GPT-5 and GPT-Image-1 models
-- Replicate for the deployment platform
-- Cog for containerization tools
+- OpenAI for GPT and DALL-E models
+- The open-source community for inspiration and support
 
 ## 📞 Support
 
-- Issues: [GitHub Issues](https://github.com/yourusername/better-gpt-image/issues)
-- Discussions: [GitHub Discussions](https://github.com/yourusername/better-gpt-image/discussions)
+- **Issues**: [GitHub Issues](https://github.com/preangelleo/better-gpt-image/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/preangelleo/better-gpt-image/discussions)
 
 ---
 
