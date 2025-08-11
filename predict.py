@@ -111,8 +111,14 @@ class Predictor(BasePredictor):
         """Run a prediction on the model"""
         
         # Validate API key
-        if not api_key or api_key == "your_api_key_here":
-            raise ValueError("Please provide a valid OpenAI API key")
+        if not api_key or api_key == "your_api_key_here" or api_key == "":
+            raise ValueError(
+                "⚠️ OpenAI API key is required!\n\n"
+                "Please provide your OpenAI API key to use this model.\n"
+                "You can get your API key from: https://platform.openai.com/api-keys\n\n"
+                "This model requires YOUR OWN API key for security and billing purposes.\n"
+                "Your API key is never stored and is only used for this generation."
+            )
         
         # Handle style list request
         if style_preset == "list":

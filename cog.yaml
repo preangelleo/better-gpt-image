@@ -24,6 +24,6 @@ build:
     - "curl"
 
 # Model metadata
-image: "r8.im/your-username/better-gpt-image"
+image: "r8.im/preangelleo/better-gpt-image"
 
 predict: "predict.py:Predictor"

@@ -2,6 +2,16 @@
 
 An enhanced image generation tool that optimizes prompts and leverages OpenAI's GPT-Image-1 model for superior results. Deploy on Replicate or run locally!
 
+## ⚠️ IMPORTANT: API Key Required
+
+**This model requires YOUR OWN OpenAI API key to function.** The API key is:
+- ✅ Used only for the current generation
+- ✅ Never stored or logged
+- ✅ Billed directly to your OpenAI account
+- ✅ Kept completely private and secure
+
+Get your API key at: https://platform.openai.com/api-keys
+
 ## ✨ Features
 
 ### 🚀 Core Capabilities
@@ -26,13 +36,37 @@ An enhanced image generation tool that optimizes prompts and leverages OpenAI's 
 - **Batch Processing** - Generate multiple variations at once
 - **Cost Estimation** - Know your token usage before generating
 
+## 🚀 Quick Start on Replicate
+
+### Use the Model (No Setup Required!)
+
+1. **Visit the model page**: https://replicate.com/preangelleo/better-gpt-image
+2. **Enter your OpenAI API key** in the `api_key` field
+3. **Type your prompt** and click "Run"
+4. **That's it!** Your enhanced image will be generated
+
+### Deploy Your Own Version
+
+1. **Fork this repository**
+2. **Sign up for Replicate**: https://replicate.com
+3. **Install Cog** (if deploying locally):
+```bash
+sudo curl -o /usr/local/bin/cog -L https://github.com/replicate/cog/releases/latest/download/cog_`uname -s`_`uname -m`
+sudo chmod +x /usr/local/bin/cog
+```
+4. **Push to Replicate**:
+```bash
+cog login
+cog push r8.im/YOUR_USERNAME/better-gpt-image
+```
+
 ## 🛠️ Installation
 
 ### Local Setup
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/better-gpt-image.git
+git clone https://github.com/preangelleo/better-gpt-image.git
 cd better-gpt-image
 ```
 
